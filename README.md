@@ -15,7 +15,7 @@ The implementation is organized into distinct modules for better maintainability
 - **MemoryBank**: Handles conversation history and memory
 - **Toolkit**: Manages tool definitions and execution
 - **LLMClient**: Handles LLM API interactions with error handling
-- **RealisticSingleAgent**: Main agent implementation with state machine
+- **ReActAgent**: Main agent implementation with state machine
 
 ### Key Capabilities
 
@@ -64,10 +64,10 @@ python single_react_agent_example.py
 ### Using the Agent in Your Code
 
 ```python
-from single_react_agent_example import RealisticSingleAgent
+from single_react_agent_example import ReActAgent
 
 # Create an agent instance
-agent = RealisticSingleAgent()
+agent = ReActAgent()
 
 # Process a customer request
 response = agent.process_request(
@@ -86,7 +86,7 @@ You can customize the agent by providing your own modules:
 
 ```python
 from single_react_agent_example import (
-    RealisticSingleAgent,
+    ReActAgent,
     LLMClient,
     Toolkit,
     MemoryBank,
@@ -109,7 +109,7 @@ custom_toolkit.register_tool({
 custom_system_message = SystemMessage("Your custom system prompt")
 
 # Create agent with custom components
-agent = RealisticSingleAgent(
+agent = ReActAgent(
     toolkit=custom_toolkit,
     system_message=custom_system_message
 )

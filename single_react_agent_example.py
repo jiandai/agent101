@@ -368,7 +368,7 @@ class AgentState(Enum):
 
 # ============= AGENT CLASS =============
 
-class RealisticSingleAgent:
+class ReActAgent:
     """Single agent implementation using modular framework components."""
     
     def __init__(self, 
@@ -1305,7 +1305,7 @@ Return ONLY valid JSON array, no other text."""
 # ============= DEMONSTRATION =============
 
 def main():
-    agent = RealisticSingleAgent()
+    agent = ReActAgent()
     final_response = agent.process_request(
         "Where is my order ORD-12345? I need to know when it will arrive."
     )
