@@ -1,178 +1,133 @@
 # Agent101
 
-A comprehensive example implementation of a single ReAct (Reasoning + Acting) agent built with Claude AI, demonstrating a modular framework for building intelligent customer support agents.
+Agent101 is a comprehensive example of a single ReAct (Reasoning + Acting) agent built with Claude AI. It demonstrates how to stitch together planning, tool orchestration, memory, and response validation to deliver production-grade customer support workflows.
+
+## At a Glance
+
+- **Language:** Python 3.7+
+- **Key file:** `single_react_agent_example.py`
+- **Primary pattern:** ReAct loop with verification and retry
+- **Use case:** End-to-end customer support agent (order lookup, shipment tracking, refunds)
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Project Structure](#project-structure)
+3. [Prerequisites](#prerequisites)
+4. [Quick Start](#quick-start)
+5. [Configuration](#configuration)
+6. [Usage](#usage)
+7. [Feature Highlights](#feature-highlights)
+8. [Architecture](#architecture)
+9. [Extending the Agent](#extending-the-agent)
+10. [GitHub Actions Integration](#github-actions-integration)
+11. [Troubleshooting](#troubleshooting)
+12. [Contributing](#contributing)
+13. [License](#license)
 
 ## Overview
 
-This repository contains `single_react_agent_example.py`, a fully-featured implementation of an AI agent that uses the ReAct pattern to handle customer support queries. The agent can understand customer requests, plan execution steps, use tools to gather information, and synthesize helpful responses.
+`single_react_agent_example.py` contains a fully-featured implementation of an AI agent that:
 
-## Features
+- understands customer goals,
+- plans multi-step solutions,
+- calls tools with automatic retry,
+- synthesizes natural language answers, and
+- verifies that a response satisfies the original request before replying.
 
-### Modular Architecture
-The implementation is organized into distinct modules for better maintainability and extensibility:
+The example ships with mock customer support tools, making it easy to follow the execution path from request intake to completed response.
 
-- **SystemMessage**: Manages system prompts for the agent
-- **MemoryBank**: Handles conversation history and memory
-- **Toolkit**: Manages tool definitions and execution
-- **LLMClient**: Handles LLM API interactions with error handling
-- **ReActAgent**: Main agent implementation with state machine
+## Project Structure
 
-### Key Capabilities
-
-1. **Goal Understanding**: Uses LLM to extract structured information from customer messages
-2. **Intelligent Planning**: Creates execution plans for complex requests
-3. **Tool Execution**: Executes tools with automatic retry and error recovery
-4. **ReAct Loop**: Implements reasoning and acting cycles for dynamic problem-solving
-5. **Response Verification**: Validates that responses fully address customer goals
-6. **Error Handling**: Robust error handling with fallback strategies
-
-### Built-in Tools
-
-The agent comes with three mock customer support tools:
-
-- `get_order`: Retrieves order information from the database
-- `track_shipment`: Gets real-time tracking information for packages
-- `process_refund`: Initiates refunds for orders
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/jiandai/agent101.git
-cd agent101
+```text
+.
+├── README.md
+├── single_react_agent_example.py   # Complete ReAct implementation and demo entry point
+└── .github/
+    └── workflows/
+        └── claude.yml              # Claude Code GitHub Action
 ```
 
-2. Install dependencies:
-```bash
-pip install anthropic python-dotenv
-```
+Key modules inside `single_react_agent_example.py`:
 
-3. Set up your environment variables:
+- `SystemMessage`: Centralizes system prompt management.
+- `MemoryBank`: Captures and recalls conversation history.
+- `Toolkit`: Registers and dispatches tool implementations.
+- `LLMClient`: Wraps the Anthropic API and handles recoverable errors.
+- `ReActAgent`: Orchestrates the overall state machine and ReAct loop.
+
+## Prerequisites
+
+- Python 3.7 or newer
+- An Anthropic Claude API key
+- `pip` for dependency management
+
+## Quick Start
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/jiandai/agent101.git
+   cd agent101
+   ```
+
+2. **Create and activate a virtual environment (recommended)**
+
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install dependencies**
+
+   ```bash
+   pip install --upgrade pip
+   pip install anthropic python-dotenv
+   ```
+
+4. **Configure environment variables** (see [Configuration](#configuration))
+
+5. **Run the demo**
+
+   ```bash
+   python single_react_agent_example.py
+   ```
+
+You should see the agent reason through a sample customer request, call the mock tools, and produce a final response.
+
+## Configuration
+
+Create a `.env` file in the project root with your Anthropic credentials:
+
 ```bash
-# Create a .env file with your Anthropic API key
 echo "ANTHROPIC_CLAUDE_API_KEY=your_api_key_here" > .env
 ```
 
+The demo loads this file automatically using `python-dotenv`. If you already manage environment variables through another system, you can skip the `.env` file and export `ANTHROPIC_CLAUDE_API_KEY` in your shell instead.
+
 ## Usage
 
-Run the example:
+### Command-line demo
 
 ```bash
 python single_react_agent_example.py
 ```
 
-### Using the Agent in Your Code
+### Embedding in your own application
 
 ```python
 from single_react_agent_example import ReActAgent
 
-# Create an agent instance
 agent = ReActAgent()
-
-# Process a customer request
 response = agent.process_request(
     "Where is my order ORD-12345? I need to know when it will arrive."
 )
 
 print(response)
-
-# View API call summary
 agent.show_api_call_summary()
 ```
 
-### Customizing the Agent
-
-You can customize the agent by providing your own modules:
-
-```python
-from single_react_agent_example import (
-    ReActAgent,
-    LLMClient,
-    Toolkit,
-    MemoryBank,
-    SystemMessage
-)
-
-# Create custom components
-custom_toolkit = Toolkit()
-custom_toolkit.register_tool({
-    "name": "custom_tool",
-    "description": "Your custom tool",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "param": {"type": "string"}
-        }
-    }
-})
-
-custom_system_message = SystemMessage("Your custom system prompt")
-
-# Create agent with custom components
-agent = ReActAgent(
-    toolkit=custom_toolkit,
-    system_message=custom_system_message
-)
-```
-
-## Agent State Machine
-
-The agent follows a state machine pattern:
-
-1. **INIT**: Initializing
-2. **UNDERSTANDING**: Understanding the customer's goal
-3. **PLANNING**: Creating an execution plan
-4. **EXECUTING**: Executing the plan (ReAct loop)
-5. **SYNTHESIZING**: Creating the final response
-6. **VERIFYING**: Verifying goal completion
-7. **COMPLETE**: Task completed successfully
-8. **FAILED**: Task failed
-
-## How It Works
-
-1. **Goal Extraction**: The agent analyzes the customer message to extract structured information about what the customer needs
-2. **Planning**: For complex requests, the agent creates a step-by-step execution plan
-3. **Execution**: The agent executes the plan using a ReAct loop:
-   - Reasons about what to do next
-   - Uses tools to gather information
-   - Processes tool results
-   - Synthesizes a response
-4. **Verification**: The agent verifies that the final response fully addresses the customer's goal
-5. **Retry**: If verification fails, the agent continues the ReAct loop to gather more information
-
-## GitHub Actions Integration
-
-This repository includes a GitHub Actions workflow (`.github/workflows/claude.yml`) that integrates Claude Code for automated assistance:
-
-- Responds to `@claude` mentions in issues and pull requests
-- Automatically processes requests and provides help
-- Has permissions to read/write code, issues, and pull requests
-
-## Contributing
-
-Feel free to fork this repository and experiment with different:
-- System prompts
-- Tool definitions
-- Planning strategies
-- Verification methods
-
-## License
-
-This is an educational example project. Feel free to use and modify as needed.
-
-## Requirements
-
-- Python 3.7+
-- anthropic
-- python-dotenv
-
-## Environment Variables
-
-- `ANTHROPIC_CLAUDE_API_KEY`: Your Anthropic API key (required)
-
-## Example Queries
-
-Try these example queries:
+### Example queries
 
 ```python
 # Order status inquiry
@@ -184,25 +139,120 @@ agent.process_request("Can you track my package TRK-98765?")
 # Refund request
 agent.process_request("I need to return order ORD-12345")
 
-# Complex multi-step request
-agent.process_request("I ordered something with order ORD-12345, can you tell me where it is and when it will arrive?")
+# Multi-step request
+agent.process_request(
+    "I ordered something with order ORD-12345. Where is it and when will it arrive?"
+)
 ```
 
-## Architecture Highlights
+## Feature Highlights
 
-- **Modular Design**: Each component is independent and testable
-- **Error Recovery**: Automatic retry with exponential backoff
-- **Fallback Strategies**: Regex-based fallbacks when LLM parsing fails
-- **Plan Validation**: Validates execution plans before running them
-- **Goal Verification**: Uses LLM to verify response completeness
+- **Goal understanding:** Extracts structured objectives from natural language.
+- **Planning:** Builds a step-by-step plan for complex tasks.
+- **ReAct loop:** Alternates reasoning and tool use with guardrails on tool chaining.
+- **Tool execution:** Built-in retry and error handling for external calls.
+- **Result verification:** Validates that responses satisfy the original goal.
+- **Memory management:** Maintains conversational context across turns.
 
-## Learn More
+Built-in tools:
 
-This implementation demonstrates production-grade patterns for building LLM agents:
-- State machine architecture
-- Tool use and execution
-- Error handling and recovery
-- Memory management
-- Response verification
+- `get_order`: Mock order metadata lookup.
+- `track_shipment`: Returns simulated tracking events.
+- `process_refund`: Initiates a refund flow.
 
-Perfect for learning about AI agents, ReAct patterns, and building production-ready AI systems.
+## Architecture
+
+### State machine
+
+The agent advances through the following states:
+
+1. `INIT` – Initial setup
+2. `UNDERSTANDING` – Parse the customer goal
+3. `PLANNING` – Draft a plan of attack
+4. `EXECUTING` – Run the ReAct loop
+5. `SYNTHESIZING` – Compose the final response
+6. `VERIFYING` – Confirm the response addresses the goal
+7. `COMPLETE` – Success path
+8. `FAILED` – Escalation path with error reasons
+
+### How the ReAct loop works
+
+1. **Goal extraction:** Parse the intent and constraints from the user message.
+2. **Plan creation:** Decide on the tool sequence required to fulfill the request.
+3. **Tool reasoning:** For each step, generate a thought and choose the next tool.
+4. **Tool execution:** Call the tool, parse the result, and stash it in memory.
+5. **Response synthesis:** Produce a customer-facing answer once enough context exists.
+6. **Verification:** Sanity-check the answer; if missing information, loop again.
+
+## Extending the Agent
+
+You can supply custom components when instantiating `ReActAgent`:
+
+```python
+from single_react_agent_example import (
+    ReActAgent,
+    LLMClient,
+    Toolkit,
+    MemoryBank,
+    SystemMessage,
+)
+
+toolkit = Toolkit()
+toolkit.register_tool({
+    "name": "custom_tool",
+    "description": "Describe the tool's purpose",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "param": {"type": "string"},
+        },
+        "required": ["param"],
+    },
+})
+
+agent = ReActAgent(
+    toolkit=toolkit,
+    system_message=SystemMessage("Your custom system prompt"),
+    memory_bank=MemoryBank(),
+    llm_client=LLMClient(),
+)
+```
+
+Suggested extension ideas:
+
+- Add real integrations (order management, ticketing, CRMs).
+- Swap in a different LLM provider through `LLMClient`.
+- Experiment with alternative planning or verification prompts.
+- Persist `MemoryBank` across sessions to build long-lived agents.
+
+## GitHub Actions Integration
+
+The repository ships with `.github/workflows/claude.yml`, which wires Claude Code into issues and pull requests. Mention `@claude` (or your configured trigger phrase) to have the action:
+
+- Review or describe changes on pull requests.
+- Triage or answer questions on issues.
+- Operate with permissions to write to issues, PRs, metadata, and contents.
+
+To enable the workflow, add the `CLAUDE_CODE_OAUTH_TOKEN` secret in your GitHub repository settings.
+
+## Troubleshooting
+
+- **Missing API key:** Ensure `ANTHROPIC_CLAUDE_API_KEY` is present in `.env` or exported in your shell.
+- **Python version errors:** Recreate the virtual environment with Python 3.7+.
+- **Rate limits or API errors:** The sample `LLMClient` retries transient Anthropic errors; permanent failures are surfaced with actionable messages.
+- **No output:** Run with `python -m single_react_agent_example` to ensure Python’s module path resolves correctly.
+
+## Contributing
+
+Contributions are welcome! Ideas to explore:
+
+- Try different system prompts or guardrails.
+- Add new tools or adapters to real services.
+- Improve planning, verification, or memory strategies.
+- Write unit tests around specific agent components.
+
+Open an issue or pull request with your proposal and we’ll take a look.
+
+## License
+
+This project is shared for educational use. Adapt and extend it freely for your own prototypes or internal tooling.
